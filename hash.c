@@ -15,6 +15,7 @@ typedef struct hash{
 	hash_campo_t* tabla;
 	size_t tam;
 	size_t cant;
+	hash_destruir_dato_t borrar;
 } hash_t;
 
 /* ************************************************************
@@ -34,7 +35,7 @@ hash_t *hash_crear(hash_destruir_dato_t destruir_dato){
 	hash->tabla = datos;
 	hash->cant = 0;
 	hash->tam = TAMANIO_INICIAL;
+	hash->borrar = destruir_dato;
 	
 	return hash;
 }
-
