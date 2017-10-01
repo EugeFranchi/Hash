@@ -7,7 +7,7 @@
 #define TAMANIO_INICIAL 10
 
 typedef struct hash_campo{
-	void* clave;
+	char* clave;
 	void* valor;
 } hash_campo_t;
 
