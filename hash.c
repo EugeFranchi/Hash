@@ -51,27 +51,31 @@ void hash_destruir(hash_t *hash){
 	free(hash);
 }
 
-/* Guarda un elemento en el hash, si la clave ya se encuentra en la
- * estructura, la reemplaza. De no poder guardarlo devuelve false.
- * Pre: La estructura hash fue inicializada
- * Post: Se almacenó el par (clave, dato)
- */
 bool hash_guardar(hash_t *hash, const char *clave, void *dato){
-
+	if(!clave)
+		return false ;
+	
 	int pos_clave = posicion_clave(hash->tabla, clave) ;
 
 	if(pos_clave == -1){
 		int clave_hasheada = hashear_clave(clave, hash->tam) ;
 		int pos = hallar_pos_vacia(hash->tabla, hash->tam, clave_hasheada) ;
+		
 		if(pos==-1)
 			return false ;
-		hash->tabla[pos]->clave = clave ;
+		
+		hash->tabla[pos]->clave = malloc(sizeof(char) * strlen(clave)+1) ;
+		if(!hash->tabla[pos]->clave)
+			return false ;
+		strcpy(hash->tabla[pos]->clave,clave);
 		hash->tabla[pos]->valor = dato ;
 		hash->tabla[pos]->estado = OCUPADO ;
+		hash->cant ++ ;
 	}
+	
 	else
 		hash->tabla[pos_clave]->valor = dato ;
-	
+
 	return true ;
 }
 
