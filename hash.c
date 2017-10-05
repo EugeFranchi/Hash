@@ -73,8 +73,11 @@ bool hash_guardar(hash_t *hash, const char *clave, void *dato){
 		hash->cant ++ ;
 	}
 	
-	else
+	else{
+		if(hash->destruir_dato)
+			hash->destruir_dato(hash->tabla[pos_clave]->valor) ;
 		hash->tabla[pos_clave]->valor = dato ;
+	}
 
 	return true ;
 }
