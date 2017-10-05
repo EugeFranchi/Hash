@@ -59,17 +59,17 @@ bool hash_guardar(hash_t *hash, const char *clave, void *dato){
 
 	if(pos_clave == -1){
 		int clave_hasheada = hashear_clave(clave, hash->tam) ;
-		int pos = hallar_pos_vacia(hash->tabla, hash->tam, clave_hasheada) ;
+		int pos_vacia = hallar_pos_vacia(hash->tabla, hash->tam, clave_hasheada) ;
 		
-		if(pos==-1)
+		if(pos_vacia == -1)
 			return false ;
 		
-		hash->tabla[pos]->clave = malloc(sizeof(char) * strlen(clave)+1) ;
-		if(!hash->tabla[pos]->clave)
+		hash->tabla[pos_vacia]->clave = malloc(sizeof(char) * strlen(clave)+1) ;
+		if(!hash->tabla[pos_vacia]->clave)
 			return false ;
-		strcpy(hash->tabla[pos]->clave,clave);
-		hash->tabla[pos]->valor = dato ;
-		hash->tabla[pos]->estado = OCUPADO ;
+		strcpy(hash->tabla[pos_vacia]->clave,clave);
+		hash->tabla[pos_vacia]->valor = dato ;
+		hash->tabla[pos_vacia]->estado = OCUPADO ;
 		hash->cant ++ ;
 	}
 	
@@ -78,6 +78,43 @@ bool hash_guardar(hash_t *hash, const char *clave, void *dato){
 
 	return true ;
 }
+
+void *hash_borrar(hash_t *hash, const char *clave){
+	int pos = posicion_clave(hash, clave) ;
+	if(pos == -1)
+		return NULL ;
+
+	void* dato = hash->tabla[pos]-> valor ;
+	hash->tabla[pos]->estado = BORRADO ;
+	hash->cant -- ;
+
+	//AGREGAR REDIMENSION
+	
+	return dato ;
+}
+
+void *hash_obtener(const hash_t *hash, const char *clave){
+	int pos = posicion_clave(hash, clave) ;
+	if(pos == -1)
+		return NULL ;
+
+	void* dato = hash->tabla[pos]-> valor ;
+
+	return dato ;
+}
+
+bool hash_pertenece(const hash_t *hash, const char *clave){
+	int pos = posicion_clave(hash, clave) ;
+	if(pos == -1)
+		return false ;
+	return true ;
+}
+
+size_t hash_cantidad(const hash_t *hash){
+	return hash->cant ;
+}
+
+
 
 //FUNCIONES AUXILIARES//
 
@@ -88,6 +125,7 @@ int hallar_pos_vacia(hash_campo_t* tabla, size_t tam, int clave_h){
 	 while(pos != clave_h -1){
 	 	if(tabla[pos]->estado == VACIO)
 	 		return pos ;
+	 	//cuando buscó hasta el final de la tabla vuelve a empezar desde el ppio
 	 	if(pos != tam-1)
 	 		pos ++ ;
 	 	else
@@ -99,6 +137,8 @@ int hallar_pos_vacia(hash_campo_t* tabla, size_t tam, int clave_h){
 //Busca en la tabla la clave que le pasan por parametro
 //si la encuentra, devuelve la posicion, sino devuelve -1
 int posicion_clave(hash_t* hash, char*clave){
+	if(!clave)
+		return -1 ;
 	int clave_hasheada = hashear_clave(clave, hash->tam) ;
 	int actual = clave_hasheada ;
 	while(hash->tabla[actual]->estado != VACIO){
