@@ -60,7 +60,7 @@ hash_iter_t *hash_iter_crear(const hash_t *hash);
 //Pre: el iterador fue creado.
 bool hash_iter_avanzar(hash_iter_t *iter);
 
-//Devuelve el valor actual en el hash.
+//Devuelve la clave actual en el hash.
 //Pre: el iterador fue creado.
 const char *hash_iter_ver_actual(const hash_iter_t *iter);
 
