@@ -83,7 +83,7 @@ int posicion_clave(const hash_t* hash, const char*clave){
 		return -1 ;
 	int clave_hasheada = hashing(clave, hash->tam) ;
 	int actual = clave_hasheada ;
-	while(hash->tabla[actual].estado_campo != VACIO){
+	while(hash->tabla[actual].estado_campo != VACIO && hash->tabla[actual].estado_campo != BORRADO){
 		if(strcmp(hash->tabla[actual].clave ,clave) == 0)
 			return actual ;
 	}
