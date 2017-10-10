@@ -37,6 +37,7 @@ size_t hashing (const char* clave, size_t tam){
 	return(clave_numerica);
 }
 
+
 //Devuelve la primera posicion vacia a partir de la posicion que arroja la funcion
 //si  no la encuentra devuelve -1
 int hallar_pos_vacia(hash_campo_t* tabla, size_t tam, int clave_h){
