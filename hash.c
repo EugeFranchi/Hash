@@ -80,6 +80,26 @@ void destruir_contenido_tabla(hash_t* hash){
 	}
 }
 
+//Cambia el tamanio del hash por tam. Devuelve false si hay un error.
+//Pre: el hash fue creado.
+//Post: el hash tiene un tamanio tam.
+bool hash_redimensionar(hash_t *hash, size_t tam){
+	hash_campo_t* nueva_tabla = malloc(sizeof(hash_campo_t*)* tam);
+	if (!nueva_tabla){
+		return false;
+	}
+	
+	hash_campo_t* tabla = hash->tabla;
+	size_t tamanio = hash->tam;
+	hash->tabla = nueva_tabla;
+	hash->tam = tam;
+	for (size_t pos = 0; pos < tamanio; pos++){
+		hash_guardar(hash, tabla[pos].clave, tabla[pos].valor);
+	}
+	free(tabla);
+	return true;
+}
+
 
 /* ************************************************************
  *                             HASH
