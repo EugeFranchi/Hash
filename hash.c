@@ -230,8 +230,13 @@ hash_iter_t *hash_iter_crear(const hash_t *hash){
 		return NULL;
 	}
 	
-	iter->act = &hash->tabla[hallar_pos_ocupada(hash, 0)];
-	*iter->hash = *hash;
+	if (hallar_pos_ocupada(hash, 0) == -1){
+		iter->act = NULL;
+	}
+	else{
+		iter->act = &hash->tabla[hallar_pos_ocupada(hash, 0)];
+	}
+	iter->hash = hash;
 	return iter;
 }
 
@@ -256,6 +261,9 @@ const char *hash_iter_ver_actual(const hash_iter_t *iter){
 
 
 bool hash_iter_al_final(const hash_iter_t *iter){
+	if (!iter->act){
+		return true;
+	}
 	int pos = posicion_clave(iter->hash, iter->act->clave);
 	return hallar_pos_ocupada(iter->hash, pos+1) == -1;
 }
