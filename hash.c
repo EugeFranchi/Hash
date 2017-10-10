@@ -23,7 +23,7 @@ typedef struct hash{
 
 struct hash_iter{
 	hash_campo_t* act;
-	hash_t* hash;
+	const hash_t* hash;
 };
 
 /* ************************************************************
