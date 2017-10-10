@@ -39,7 +39,7 @@ size_t hashing (const char* clave, size_t tam){
 		clave_numerica = clave_numerica * num2 + (*clave);
 		num2 = num2 * num1;
 	}
-	return(clave_numerica);
+	return(clave_numerica%tam);
 }
 
 //Devuelve la primera posicion vacia a partir de la posicion que arroja la funcion
