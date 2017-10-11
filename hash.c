@@ -254,7 +254,12 @@ bool hash_iter_avanzar(hash_iter_t *iter){
 	}
 	
 	int pos = posicion_clave(iter->hash, iter->act->clave);
-	iter->act = &iter->hash->tabla[hallar_pos_ocupada(iter->hash, pos+1)];
+	if (hallar_pos_ocupada(iter->hash, pos+1) == -1){
+		iter->act = NULL;
+	}
+	else{
+		iter->act = &iter->hash->tabla[hallar_pos_ocupada(iter->hash, pos+1)];
+	}
 	return true;
 }
 
@@ -271,8 +276,7 @@ bool hash_iter_al_final(const hash_iter_t *iter){
 	if (!iter->act){
 		return true;
 	}
-	int pos = posicion_clave(iter->hash, iter->act->clave);
-	return hallar_pos_ocupada(iter->hash, pos+1) == -1;
+	return false;
 }
 
 
