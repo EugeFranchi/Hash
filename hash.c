@@ -83,11 +83,8 @@ int hallar_pos_ocupada(const hash_t* hash, size_t inicio){
 //Busca en la tabla la clave que le pasan por parametro
 //si la encuentra, devuelve la posicion, sino devuelve -1
 int posicion_clave(const hash_t* hash, const char*clave){
-	if(!clave)
-		return -1 ;
 	int clave_hasheada = hashing(clave, hash->tam) ;
-	int actual = clave_hasheada ;
-	while(hash->tabla[actual].estado_campo != VACIO && hash->tabla[actual].estado_campo != BORRADO){
+	for (int actual = clave_hasheada; hash->tabla[actual].estado_campo == OCUPADO; actual++){
 		if(strcmp(hash->tabla[actual].clave ,clave) == 0)
 			return actual ;
 	}
