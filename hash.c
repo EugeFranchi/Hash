@@ -5,6 +5,10 @@
 #include <stdbool.h>
 
 #define TAMANIO_INICIAL 10
+#define CRITERIO_AUMENTO 0.7
+#define CRITERIO_ACHICAR 0.3
+#define FACTOR_AUMENTO 2
+#define FACTOR_ACHICAR 0.5
 
 typedef enum estado_campo {VACIO,BORRADO,OCUPADO} estado_t ;
 
@@ -107,7 +111,7 @@ void destruir_contenido_tabla(hash_t* hash){
 //Pre: el hash fue creado.
 //Post: el hash tiene un tamanio tam.
 bool hash_redimensionar(hash_t *hash, size_t tam){
-	hash_campo_t* nueva_tabla = malloc(sizeof(hash_campo_t*)* tam);
+	hash_campo_t* nueva_tabla = malloc(sizeof(hash_campo_t)* tam);
 	if (!nueva_tabla){
 		return false;
 	}
@@ -117,7 +121,9 @@ bool hash_redimensionar(hash_t *hash, size_t tam){
 	hash->tabla = nueva_tabla;
 	hash->tam = tam;
 	for (size_t pos = 0; pos < tamanio; pos++){
-		hash_guardar(hash, tabla[pos].clave, tabla[pos].valor);
+		if (tabla[pos].estado_campo == OCUPADO){
+			hash_guardar(hash, tabla[pos].clave, tabla[pos].valor);
+		}
 	}
 	free(tabla);
 	return true;
@@ -153,9 +159,11 @@ void hash_destruir(hash_t *hash){
 	free(hash);
 }
 
-bool hash_guardar(hash_t *hash, const char *clave, void *dato){
-	if(!clave)
-		return false ;
+bool hash_guardar(hash_t *hash, const char *clave, void *dato){	
+	/*Dobla el tamanio del hash si cant/tam supera el 0.7*/
+	if (hash->cant/hash->tam >= CRITERIO_AUMENTO){
+		hash_redimensionar(hash, hash->tam * FACTOR_AUMENTO);
+	}
 	
 	int pos_clave = posicion_clave(hash, clave) ;
 
@@ -164,7 +172,7 @@ bool hash_guardar(hash_t *hash, const char *clave, void *dato){
 		int pos_vacia = hallar_pos_vacia(hash->tabla, hash->tam, clave_hasheada) ;
 		
 		if(pos_vacia == -1)
-			return false ;
+			return false ;///////creo que aca nunca llega si se redimensiona antes
 		
 		hash->tabla[pos_vacia].clave = malloc(sizeof(char) * strlen(clave)+1) ;
 		if(!hash->tabla[pos_vacia].clave)
@@ -193,7 +201,9 @@ void *hash_borrar(hash_t *hash, const char *clave){
 	hash->tabla[pos].estado_campo = BORRADO ;
 	hash->cant -- ;
 
-	//AGREGAR REDIMENSION
+	if ((hash->cant/hash->tam < CRITERIO_ACHICAR) && (hash->tam * FACTOR_ACHICAR >=TAMANIO_INICIAL)){
+		hash_redimensionar(hash, hash->tam * FACTOR_ACHICAR);
+	}
 	
 	return dato ;
 }
@@ -272,4 +282,3 @@ bool hash_iter_al_final(const hash_iter_t *iter){
 void hash_iter_destruir(hash_iter_t* iter){
 	free(iter);
 }
-
