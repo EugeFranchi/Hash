@@ -178,7 +178,10 @@ bool hash_guardar(hash_t *hash, const char *clave, void *dato){
 		if(pos_vacia == -1)
 			return false ;///////creo que aca nunca llega si se redimensiona antes
 		
-		hash->tabla[pos_vacia].clave = strdup(clave);
+		hash->tabla[pos_vacia].clave = malloc(sizeof(char) * strlen(clave)+1) ;
+		if(!hash->tabla[pos_vacia].clave)
+			return false ;
+		strcpy(hash->tabla[pos_vacia].clave,clave);
 		hash->tabla[pos_vacia].valor = dato ;
 		hash->tabla[pos_vacia].estado_campo = OCUPADO ;
 		hash->cant++;
