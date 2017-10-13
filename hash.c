@@ -11,19 +11,20 @@
 #define FACTOR_ACHICAR 0.5
 
 typedef enum estado_campo {VACIO,BORRADO,OCUPADO} estado_t ;
+typedef struct hash_campo hash_campo_t ;
 
-typedef struct hash_campo{
+struct hash_campo{
 	char* clave;
 	void* valor;
 	estado_t estado_campo ;
-} hash_campo_t;
+} ;
 
-typedef struct hash{
+struct hash{
 	hash_campo_t* tabla;
 	size_t tam;
 	size_t cant;
 	hash_destruir_dato_t destruir_dato;
-} hash_t;
+};
 
 struct hash_iter{
 	hash_campo_t* act;
@@ -40,7 +41,7 @@ size_t hashing (const char* clave, size_t tam){
 	unsigned int num2 = 63689;
 	unsigned int clave_numerica = 0;
 	for(int i = 0; *clave; clave++, i++){
-		clave_numerica = clave_numerica * num2 + (*clave);
+		clave_numerica = clave_numerica * num2 + (unsigned int)atoi((clave));
 		num2 = num2 * num1;
 	}
 	return(clave_numerica%tam);
@@ -72,7 +73,7 @@ int hallar_pos_ocupada(const hash_t* hash, size_t inicio){
 	if (hash_esta_vacio(hash)){
 		return -1;
 	}
-	for (size_t pos = inicio; pos < hash->tam; pos++){
+	for (int pos = (int)inicio; pos < (int)hash->tam; pos++){
 		if(hash->tabla[pos].estado_campo == OCUPADO){
 			return pos;
 		}
@@ -83,7 +84,7 @@ int hallar_pos_ocupada(const hash_t* hash, size_t inicio){
 //Busca en la tabla la clave que le pasan por parametro
 //si la encuentra, devuelve la posicion, sino devuelve -1
 int posicion_clave(const hash_t* hash, const char*clave){
-	int clave_hasheada = hashing(clave, hash->tam) ;
+	int clave_hasheada = (int)hashing(clave, hash->tam) ;
 	for (int actual = clave_hasheada; hash->tabla[actual].estado_campo == OCUPADO; actual++){
 		if(strcmp(hash->tabla[actual].clave ,clave) == 0)
 			return actual ;
@@ -171,7 +172,7 @@ bool hash_guardar(hash_t *hash, const char *clave, void *dato){
 	int pos_clave = posicion_clave(hash, clave) ;
 
 	if(pos_clave == -1){
-		int clave_hasheada = hashing(clave, hash->tam) ;
+		int clave_hasheada = (int)hashing(clave, hash->tam) ;
 		int pos_vacia = hallar_pos_vacia(hash->tabla, hash->tam, clave_hasheada) ;
 		
 		if(pos_vacia == -1)
@@ -192,8 +193,9 @@ bool hash_guardar(hash_t *hash, const char *clave, void *dato){
 }
 
 void *hash_borrar(hash_t *hash, const char *clave){
-	if ((hash->cant/hash->tam < CRITERIO_ACHICAR) && (hash->tam * FACTOR_ACHICAR >=TAMANIO_INICIAL)){
-		hash_redimensionar(hash, hash->tam * FACTOR_ACHICAR);
+	if ((hash->cant/hash->tam < CRITERIO_ACHICAR) && ((double)hash->tam * FACTOR_ACHICAR >=TAMANIO_INICIAL)){
+		double nuevo_tam = (double) hash->tam * FACTOR_ACHICAR ;
+		hash_redimensionar(hash, (size_t)nuevo_tam);
 	}
 	int pos = posicion_clave(hash, clave) ;
 	if(pos == -1)
@@ -257,11 +259,11 @@ bool hash_iter_avanzar(hash_iter_t *iter){
 	}
 	
 	int pos = posicion_clave(iter->hash, iter->act->clave);
-	if (hallar_pos_ocupada(iter->hash, pos+1) == -1){
+	if (hallar_pos_ocupada(iter->hash, (size_t)pos+1) == -1){
 		iter->act = NULL;
 	}
 	else{
-		iter->act = &iter->hash->tabla[hallar_pos_ocupada(iter->hash, pos+1)];
+		iter->act = &iter->hash->tabla[hallar_pos_ocupada(iter->hash, (size_t)pos+1)];
 	}
 	return true;
 }
@@ -286,4 +288,3 @@ bool hash_iter_al_final(const hash_iter_t *iter){
 void hash_iter_destruir(hash_iter_t* iter){
 	free(iter);
 }
-
