@@ -36,15 +36,23 @@ struct hash_iter{
  * ***********************************************************/
 
 //Devuele una posicion segun la clave y el tamanio del hash.
-size_t hashing (const char* clave, size_t tam){
+/*size_t hashing (const char* clave, size_t tam){
 	unsigned int num1 = 378551;
 	unsigned int num2 = 63689;
 	unsigned int clave_numerica = 0;
 	for(int i = 0; *clave; clave++, i++){
-		clave_numerica = clave_numerica * num2 + (unsigned int)atoi((clave));
+		clave_numerica = clave_numerica * num2 + (*clave);
 		num2 = num2 * num1;
 	}
 	return(clave_numerica%tam);
+}*/
+
+size_t hashing (const char* word, size_t hashtable_size){
+	int hash_adress = 0;
+	for (int counter = 0; word[counter] != '\0'; counter++){
+		hash_adress = word[counter] + (hash_adress << 6) + (hash_adress <<16) - hash_adress;
+	}
+	return (size_t) (hash_adress%hashtable_size);
 }
 
 //Devuelve la primera posicion vacia a partir de la posicion que arroja la funcion
@@ -83,11 +91,14 @@ int hallar_pos_ocupada(const hash_t* hash, size_t inicio){
 
 //Busca en la tabla la clave que le pasan por parametro
 //si la encuentra, devuelve la posicion, sino devuelve -1
-int posicion_clave(const hash_t* hash, const char*clave){
+size_t posicion_clave(const hash_t* hash, const char*clave){
 	int clave_hasheada = (int)hashing(clave, hash->tam) ;
-	for (int actual = clave_hasheada; hash->tabla[actual].estado_campo == OCUPADO; actual++){
-		if(strcmp(hash->tabla[actual].clave ,clave) == 0)
-			return actual ;
+	for (int actual = clave_hasheada; hash->tabla[actual%hash->tam].estado_campo == OCUPADO; actual++){
+		if (hash->tabla[actual%hash->tam].estado_campo == BORRADO){
+			continue;
+		}
+		if(strcmp(hash->tabla[actual%hash->tam].clave ,clave) == 0)
+			return actual%hash->tam ;
 	}
 	return -1 ;
 }
@@ -102,8 +113,7 @@ void destruir_contenido_tabla(hash_campo_t* tabla, size_t tam, hash_destruir_dat
 		}
 		if(destruir_dato){
 			destruir_dato(tabla[i].valor) ;
-		}
-		
+		}		
 	}
 }
 
@@ -112,24 +122,26 @@ void destruir_contenido_tabla(hash_campo_t* tabla, size_t tam, hash_destruir_dat
 //Pre: el hash fue creado.
 //Post: el hash tiene un tamanio tam.
 bool hash_redimensionar(hash_t *hash, size_t tam){
-	hash_campo_t* nueva_tabla = malloc(sizeof(hash_campo_t)* tam + 1);
+	hash_campo_t* nueva_tabla = malloc(sizeof(hash_campo_t)* tam );
 	if (!nueva_tabla){
 		return false;
 	}
 	for(int i = 0 ; i < tam ; i++)
 		nueva_tabla[i].estado_campo = VACIO ;
 	
-	hash_campo_t* tabla = hash->tabla;
+	hash_campo_t* tabla_vieja = hash->tabla;
 	size_t tamanio = hash->tam;
 	hash->tabla = nueva_tabla;
 	hash->tam = tam;
+	size_t cant = hash->cant;
 	for (size_t pos = 0; pos < tamanio; pos++){
-		if (tabla[pos].estado_campo == OCUPADO){
-			hash_guardar(hash, tabla[pos].clave, tabla[pos].valor);
+		if (tabla_vieja[pos].estado_campo == OCUPADO){
+			hash_guardar(hash, tabla_vieja[pos].clave, tabla_vieja[pos].valor);
+			free(tabla_vieja[pos].clave) ;
 		}
 	}
-	destruir_contenido_tabla(tabla, tamanio, hash->destruir_dato);
-	free(tabla);
+	hash->cant = cant;
+	free(tabla_vieja);
 	return true;
 }
 
@@ -164,13 +176,11 @@ void hash_destruir(hash_t *hash){
 }
 
 bool hash_guardar(hash_t *hash, const char *clave, void *dato){	
-	/*Dobla el tamanio del hash si cant/tam supera el 0.7*/
-	if (hash->cant/hash->tam >= CRITERIO_AUMENTO){
-		hash_redimensionar(hash, hash->tam * FACTOR_AUMENTO);
-	}
-	
+	if (!clave){
+		return false;
+	}	
 	int pos_clave = posicion_clave(hash, clave) ;
-
+	
 	if(pos_clave == -1){
 		int clave_hasheada = (int)hashing(clave, hash->tam) ;
 		int pos_vacia = hallar_pos_vacia(hash->tabla, hash->tam, clave_hasheada) ;
@@ -192,38 +202,48 @@ bool hash_guardar(hash_t *hash, const char *clave, void *dato){
 			hash->destruir_dato(hash->tabla[pos_clave].valor) ;
 		hash->tabla[pos_clave].valor = dato ;
 	}
+	
+	if (hash->cant/hash->tam >= CRITERIO_AUMENTO){
+		hash_redimensionar(hash, hash->tam * FACTOR_AUMENTO);
+	}
 	return true ;
 }
 
 void *hash_borrar(hash_t *hash, const char *clave){
-	if ((hash->cant/hash->tam < CRITERIO_ACHICAR) && ((double)hash->tam * FACTOR_ACHICAR >=TAMANIO_INICIAL)){
+	if(!clave){
+		return NULL;
+	}
+	int pos = posicion_clave(hash, clave) ;
+	if(pos == -1)
+		return NULL ;
+	//la clave existe en la tabla
+
+	void* dato = hash->tabla[pos].valor ;
+	hash->tabla[pos].estado_campo = BORRADO ;
+	hash->cant -- ;
+	if ((hash->cant < (double)hash->tam * CRITERIO_ACHICAR) && (hash->tam * FACTOR_ACHICAR >= TAMANIO_INICIAL)){
 		double nuevo_tam = (double) hash->tam * FACTOR_ACHICAR ;
 		hash_redimensionar(hash, (size_t)nuevo_tam);
+	}
+	return dato ;
+}
+
+
+void *hash_obtener(const hash_t *hash, const char *clave){
+	if(!clave){
+		return NULL;
 	}
 	int pos = posicion_clave(hash, clave) ;
 	if(pos == -1)
 		return NULL ;
 
-	void* dato = hash->tabla[pos].valor ;
-	hash->tabla[pos].estado_campo = BORRADO ;
-	hash->cant -- ;
-
-	
-	
-	return dato ;
-}
-
-void *hash_obtener(const hash_t *hash, const char *clave){
-	int pos = posicion_clave(hash, clave) ;
-	if(pos == -1)
-		return NULL ;
-
-	void* dato = hash->tabla[pos].valor ;
-
-	return dato ;
+	return hash->tabla[pos].valor ;
 }
 
 bool hash_pertenece(const hash_t *hash, const char *clave){
+	if(!clave){
+		return NULL;
+	}
 	int pos = posicion_clave(hash, clave) ;
 	if(pos == -1)
 		return false ;
