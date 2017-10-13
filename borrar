@@ -1,0 +1,17 @@
+void *hash_borrar(hash_t *hash, const char *clave){
+	if(!clave)
+		return NULL ;
+	int pos = posicion_clave(hash, clave) ;
+	if(pos == -1)
+		return NULL ;
+	//la clave existe en la tabla
+
+	void* dato = hash->tabla[pos].valor ;
+	hash->tabla[pos].estado_campo = BORRADO ;
+	hash->cant -- ;
+	if ((hash->cant < (double)hash->tam * CRITERIO_ACHICAR) && (hash->tam != TAMANIO_INICIAL)){
+		double nuevo_tam = (double) hash->tam * FACTOR_ACHICAR ;
+		hash_redimensionar(hash, (size_t)nuevo_tam);
+	}
+	return dato ;
+}
