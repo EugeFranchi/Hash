@@ -286,3 +286,4 @@ bool hash_iter_al_final(const hash_iter_t *iter){
 void hash_iter_destruir(hash_iter_t* iter){
 	free(iter);
 }
+
